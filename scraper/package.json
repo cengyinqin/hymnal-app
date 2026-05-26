@@ -1,0 +1,21 @@
+{
+  "name": "hymnal-scraper",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "da": "node src/index.js da",
+    "bu": "node src/index.js bu",
+    "en": "node src/index.js en",
+    "er": "node src/index.js er",
+    "xin": "node src/index.js xin",
+    "csr": "node src/index.js csr",
+    "by": "node src/index.js by",
+    "all": "node src/index.js all"
+  },
+  "dependencies": {
+    "axios": "^1.7.0",
+    "cheerio": "^1.0.0-rc.12",
+    "p-limit": "^6.1.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "da": {
+    "name": "大本诗歌",
+    "language": "zh-CN",
+    "totalCount": 770,
+    "categoryCount": 30
+  },
+  "bu": {
+    "name": "补充诗歌",
+    "language": "zh-CN",
+    "totalCount": 422,
+    "categoryCount": 11
+  },
+  "en": {
+    "name": "英文诗歌",
+    "language": "en",
+    "totalCount": 1340,
+    "categoryCount": 0
+  },
+  "er": {
+    "name": "儿童诗歌",
+    "language": "zh-CN",
+    "totalCount": 330,
+    "categoryCount": 13
+  },
+  "xin": {
+    "name": "新歌颂咏",
+    "language": "zh-CN",
+    "totalCount": 167,
+    "categoryCount": 6
+  },
+  "csr": {
+    "name": "新诗",
+    "language": "zh-CN",
+    "totalCount": 205,
+    "categoryCount": 0
+  },
+  "by": {
+    "name": "标语诗歌",
+    "language": "zh-CN",
+    "totalCount": 58,
+    "categoryCount": 0
+  }
+}
