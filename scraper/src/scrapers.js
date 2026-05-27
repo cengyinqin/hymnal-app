@@ -399,7 +399,42 @@ async function scrapeDaPoem(base, link) {
   }
   if (!title) title = link.title || `第${link.number}首`;
 
-  const verses = parseVerses(body);
+  // Parse verses from DOM: <div id=chap> markers + <div id=con> content
+  const verses = [];
+  const chapDivs = [];
+  $('div[id=chap]').each((_, el) => {
+    let label = '';
+    const aEl = $(el).find('a[id=white]');
+    if (aEl.length) {
+      label = aEl.text().trim();
+      label = label.replace(/^_+|_+$/g, '').trim();
+    }
+    if (!label) {
+      const name = $(el).find('a').first().attr('name');
+      if (name) {
+        const parts = name.split('_');
+        if (parts.length >= 2) label = parts.slice(1).join('_');
+      }
+    }
+    chapDivs.push({ label });
+  });
+
+  $('div[id=con]').each((i, el) => {
+    const text = $(el).text().trim();
+    if (!text) return;
+    const lines = normalizeLyricsText(text);
+    const meaningful = lines.filter(l => l.length > 2 && !/^[a-z_]+\(\)/.test(l));
+    if (meaningful.length === 0) return;
+    const label = i < chapDivs.length ? chapDivs[i].label : '';
+    const vNum = chineseToNumber(label) || (i + 1);
+    verses.push({
+      verseNumber: vNum,
+      verseLabel: label || String(vNum),
+      lines: meaningful,
+      isChorus: false,
+    });
+  });
+
   const meta = extractMeta(body, html);
   const sheetMusicPath = extractSheetMusic(html, 'da');
 
