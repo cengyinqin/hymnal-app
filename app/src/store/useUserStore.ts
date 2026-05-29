@@ -1,30 +1,56 @@
 import { create } from 'zustand';
+import { Platform } from 'react-native';
 import { HISTORY_MAX } from '../constants';
 
-// Storage adapter — uses MMKV in production, falls back to in-memory for dev/typing
-let mmkvStorage: any = null;
-try {
-  const { MMKV } = require('react-native-mmkv');
-  mmkvStorage = new MMKV({ id: 'hymnal-user-store' });
-} catch {
-  // MMKV not available (e.g., during TypeScript checks)
-}
+// Storage path
+const STORE_FILE = 'hymnal-user-data.json';
 
-function getItem<T>(key: string, fallback: T): T {
+// Async file persistence using expo-file-system
+let fsReady = false;
+let docDir = '';
+
+async function initFS() {
+  if (Platform.OS === 'web') return;
   try {
-    if (mmkvStorage) {
-      const raw = mmkvStorage.getString(key);
-      if (raw) return JSON.parse(raw);
-    }
+    const FS = require('expo-file-system');
+    docDir = FS.documentDirectory;
+    fsReady = true;
   } catch {}
-  return fallback;
 }
 
-function setItem(key: string, value: unknown) {
+async function loadFromFile(): Promise<Record<string, any>> {
+  if (Platform.OS === 'web') {
+    try {
+      const raw = localStorage.getItem('hymnal-user');
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return {};
+  }
+  if (!fsReady) await initFS();
+  if (!fsReady) return {};
   try {
-    if (mmkvStorage) {
-      mmkvStorage.set(key, JSON.stringify(value));
-    }
+    const FS = require('expo-file-system');
+    const info = await FS.getInfoAsync(docDir + STORE_FILE);
+    if (!info.exists) return {};
+    const raw = await FS.readAsStringAsync(docDir + STORE_FILE);
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function saveToFile(data: Record<string, any>) {
+  if (Platform.OS === 'web') {
+    try {
+      localStorage.setItem('hymnal-user', JSON.stringify(data));
+    } catch {}
+    return;
+  }
+  if (!fsReady) await initFS();
+  if (!fsReady) return;
+  try {
+    const FS = require('expo-file-system');
+    await FS.writeAsStringAsync(docDir + STORE_FILE, JSON.stringify(data));
   } catch {}
 }
 
@@ -41,6 +67,7 @@ interface UserState {
   history: HistoryEntry[];
   fontSize: FontSize;
   theme: ThemeMode;
+  ready: boolean;
 
   // Favorites
   toggleFavorite: (poemId: string) => void;
@@ -57,11 +84,21 @@ interface UserState {
   setTheme: (mode: ThemeMode) => void;
 }
 
+async function persist(state: Partial<UserState>) {
+  await saveToFile({
+    favorites: state.favorites,
+    history: state.history,
+    fontSize: state.fontSize,
+    theme: state.theme,
+  });
+}
+
 export const useUserStore = create<UserState>((set, get) => ({
-  favorites: getItem<string[]>('favorites', []),
-  history: getItem<HistoryEntry[]>('history', []),
-  fontSize: getItem<FontSize>('fontSize', 'medium'),
-  theme: getItem<ThemeMode>('theme', 'system'),
+  favorites: [],
+  history: [],
+  fontSize: 'medium',
+  theme: 'system',
+  ready: false,
 
   toggleFavorite: (poemId: string) => {
     const current = get().favorites;
@@ -73,8 +110,8 @@ export const useUserStore = create<UserState>((set, get) => ({
     } else {
       next = [poemId, ...current];
     }
-    setItem('favorites', next);
     set({ favorites: next });
+    persist({ favorites: next });
   },
 
   isFavorite: (poemId: string) => get().favorites.includes(poemId),
@@ -82,30 +119,45 @@ export const useUserStore = create<UserState>((set, get) => ({
   addToHistory: (poemId: string) => {
     const current = get().history.filter(h => h.poemId !== poemId);
     const next = [{ poemId, timestamp: Date.now() }, ...current].slice(0, HISTORY_MAX);
-    setItem('history', next);
     set({ history: next });
+    persist({ history: next });
   },
 
   removeFromHistory: (poemId: string) => {
     const next = get().history.filter(h => h.poemId !== poemId);
-    setItem('history', next);
     set({ history: next });
+    persist({ history: next });
   },
 
   clearHistory: () => {
-    setItem('history', []);
     set({ history: [] });
+    persist({ history: [] });
   },
 
   recentHistory: () => get().history.slice(0, 20).map(h => h.poemId),
 
   setFontSize: (size: FontSize) => {
-    setItem('fontSize', size);
     set({ fontSize: size });
+    persist({ fontSize: size });
   },
 
   setTheme: (mode: ThemeMode) => {
-    setItem('theme', mode);
     set({ theme: mode });
+    persist({ theme: mode });
   },
 }));
+
+// Load persisted data on startup
+loadFromFile().then(data => {
+  if (data && Object.keys(data).length > 0) {
+    useUserStore.setState({
+      favorites: data.favorites || [],
+      history: data.history || [],
+      fontSize: data.fontSize || 'medium',
+      theme: data.theme || 'system',
+      ready: true,
+    });
+  } else {
+    useUserStore.setState({ ready: true });
+  }
+});

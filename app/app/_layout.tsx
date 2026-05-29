@@ -10,6 +10,7 @@ export default function RootLayout() {
   const { isLoading, error, loadData } = useDataStore();
   const fontSize = useUserStore(s => s.fontSize);
   const theme = useUserStore(s => s.theme);
+  const userReady = useUserStore(s => s.ready);
 
   const [fontsLoaded] = useFonts({
     // System fonts are used by default; load custom fonts here if needed
