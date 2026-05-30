@@ -10,8 +10,8 @@ import type { SearchResult } from '../../src/types';
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [activeCollection, setActiveCollection] = useState<string | undefined>();
-  const searchIndex = useDataStore(s => s.searchIndex);
-  const results = useSearch(query, searchIndex, activeCollection);
+  const poemsList = useDataStore(s => s.poemsList);
+  const results = useSearch(query, poemsList, activeCollection);
 
   const toggleCollection = useCallback((slug: string) => {
     setActiveCollection(prev => (prev === slug ? undefined : slug));

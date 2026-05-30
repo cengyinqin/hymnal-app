@@ -69,7 +69,7 @@ export interface SearchResult {
   collectionSlug: string;
   number: number;
   numberDisplay: string;
-  category: string;
+  category?: string;
   score: number;
   matchInTitle: boolean;
 }

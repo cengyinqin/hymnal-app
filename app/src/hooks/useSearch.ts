@@ -1,17 +1,17 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { SearchIndexEntry, SearchResult } from '../types';
+import type { Poem, SearchResult } from '../types';
 import { search } from '../lib/search';
 import { SEARCH_DEBOUNCE_MS } from '../constants';
 
 export function useSearch(
   query: string,
-  index: SearchIndexEntry[],
+  poems: Poem[],
   activeCollection?: string,
 ): SearchResult[] {
   const debounced = useDebounce(query, SEARCH_DEBOUNCE_MS);
   return useMemo(
-    () => search(debounced, index, activeCollection),
-    [debounced, index, activeCollection],
+    () => search(debounced, poems, activeCollection),
+    [debounced, poems, activeCollection],
   );
 }
 
